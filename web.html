@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mexicana Restaurant - Ordering & Payment</title>
+  <!-- Menghubungkan file CSS eksternal -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 1. LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h1>Mexicana Restaurant</h1>
+      <p class="subtitle">Please log in first to browse and order from our menu</p>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Username / Customer Name</label>
+          <input type="text" id="username" placeholder="Example: Alex" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn-login">Log In & View Menu</button>
+      </form>
+
+      <div class="demo-hint">
+        💡 <strong>Info:</strong> Enter any username and password to access the ordering page.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MAIN APP & ORDERING PAGE -->
+  <div id="main-app">
+    <header>
+      <div class="nav-container">
+        <a href="#" class="logo">Mexicana Restaurant</a>
+        <nav>
+          <ul>
+            <li><a href="#food-menu">Food Menu (30)</a></li>
+            <li><a href="#drink-menu">Drinks Menu (12)</a></li>
+            <li><a href="#order-cart">Cart (<span id="cart-count">0</span>)</a></li>
+            <li><span class="user-badge" id="display-user">Hello, Guest</span></li>
+            <li><button type="button" class="btn-logout" onclick="logout()">Log Out</button></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <div class="hero">
+      <h1>Authentic Mexican Flavors</h1>
+      <p>Savor traditional Mexican delicacies and refreshing beverages crafted from fresh ingredients and rich spices.</p>
+      <a href="#food-menu" class="btn">Order Now</a>
+    </div>
+
+    <!-- Food Menu Section (30 Items) -->
+    <section id="food-menu" class="content-section">
+      <h2 class="section-title">Mexicana Food Menu</h2>
+      <p class="section-subtitle">Choose from our 30 signature Mexican dishes and add them to your order cart</p>
+      
+      <div class="menu-grid" id="food-container"></div>
+    </section>
+
+    <!-- Drinks Menu Section (12 Items) -->
+    <section id="drink-menu" class="content-section" style="padding-top: 1rem;">
+      <h2 class="section-title">Refreshing Drinks & Beverages</h2>
+      <p class="section-subtitle">Complete your meal with 12 authentic Mexican aguas frescas, mocktails, and specialty drinks</p>
+      
+      <div class="menu-grid" id="drink-container"></div>
+    </section>
+
+    <!-- Cart & Payment Section -->
+    <section id="order-cart" class="content-section">
+      <h2 class="section-title">Order Cart & Payment</h2>
+      <p class="section-subtitle">Review your selected items and choose your preferred payment method</p>
+
+      <div class="cart-box">
+        <h3 style="margin-bottom: 1rem; color: var(--dark-color);">Order Summary</h3>
+        <ul class="cart-list" id="cart-items">
+          <li style="color: #888; justify-content: center;">Your cart is currently empty. Please select items from the menu above.</li>
+        </ul>
+        <div class="cart-total">
+          <span>Total Payment:</span>
+          <span style="color: var(--secondary-color);" id="cart-total-price">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Payment Methods Selection -->
+      <div class="payment-section">
+        <h3 style="margin-bottom: 0.5rem; color: var(--dark-color);">Select Payment Method</h3>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Please select one of the payment options below:</p>
+        
+        <div class="payment-grid">
+          <label class="payment-option" onclick="selectPayment(this, 'bank')">
+            <input type="radio" name="payment" value="Bank Mandiri">
+            <span>Mandiri</span>
+          </label>
+          <label class="payment-option" onclick="selectPayment(this, 'bank')">
+            <input type="radio" name="payment" value="Bank BRI">
+            <span>BRI</span>
+          </label>
+          <label class="payment-option" onclick="selectPayment(this, 'bank')">
+            <input type="radio" name="payment" value="Bank BCA">
+            <span>BCA</span>
+          </label>
+          <label class="payment-option" onclick="selectPayment(this, 'ewallet')">
+            <input type="radio" name="payment" value="GoPay">
+            <span>GoPay</span>
+          </label>
+          <label class="payment-option" onclick="selectPayment(this, 'ewallet')">
+            <input type="radio" name="payment" value="DANA">
+            <span>DANA</span>
+          </label>
+          <label class="payment-option" onclick="selectPayment(this, 'ewallet')">
+            <input type="radio" name="payment" value="QRIS">
+            <span>QRIS</span>
+          </label>
+        </div>
+
+        <!-- QR Code Display with 5-Minute Countdown Timer for GoPay, DANA, QRIS -->
+        <div id="qr-payment-box" class="payment-detail-box">
+          <h4 style="color: var(--dark-color);" id="qr-title">Scan QR Code</h4>
+          <p style="font-size: 0.9rem; color: #666;">Complete payment before the 5-minute timer expires</p>
+          
+          <div id="qr-timer-display" class="qr-timer-badge">⏳ Time Remaining: 05:00</div>
+
+          <div class="qr-wrapper">
+            <img id="qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MexicanaRestaurantPayment" alt="Payment QR Code">
+            <div id="qr-expired-overlay" class="qr-expired-overlay">QR Code Expired</div>
+          </div>
+
+          <p style="font-weight: bold; color: var(--primary-color);" id="qr-amount-text">Total Amount: $0.00</p>
+          <button type="button" id="btn-refresh-qr" class="btn-refresh-qr" onclick="restartQrTimer()">🔄 Generate New QR Code</button>
+        </div>
+
+        <!-- Account Number Input for Bank Mandiri, BRI, BCA -->
+        <div id="bank-payment-box" class="payment-detail-box">
+          <div class="bank-input-wrapper">
+            <label for="account-input" id="bank-label">Please enter your bank account number</label>
+            <input type="text" id="account-input" placeholder="Example: 1234567890" inputmode="numeric">
+            <small style="display: block; margin-top: 0.5rem; color: #666;" id="bank-selected-info">Selected Bank: -</small>
+          </div>
+        </div>
+
+        <div style="text-align: right;">
+          <button type="button" class="btn" style="padding: 1rem 2.5rem; font-size: 1.05rem;" onclick="checkout()">Pay Now</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>&copy; 2026 Mexicana Restaurant. All Rights Reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">Item added to cart!</div>
+
+  <script>
+    const fallbackFoodImg = "https://images.pexels.com/photos/4958792/pexels-photo-4958792.jpeg?auto=compress&cs=tinysrgb&w=600";
+    const fallbackDrinkImg = "https://images.pexels.com/photos/128242/pexels-photo-128242.jpeg?auto=compress&cs=tinysrgb&w=600";
+
+    // 30 Food Items + 12 Drink Items
+    const menuData = [
+      // --- 30 FOOD ITEMS ---
+      {
+        id: 1,
+        category: "food",
+        name: "Carne Asada Tacos",
+        price: 12.50,
+        tag: "Best Seller",
+        desc: "Three grilled marinated steak tacos topped with fresh cilantro, diced onions, and roasted salsa verde.",
+        img: "https://images.pexels.com/photos/4958792/pexels-photo-4958792.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 2,
+        category: "food",
+        name: "Chicken Burrito Supreme",
+        price: 14.00,
+        tag: "Favorite",
+        desc: "Large flour tortilla stuffed with grilled chicken, Mexican rice, black beans, melted cheese, and sour cream.",
+        img: "https://images.pexels.com/photos/461198/pexels-photo-461198.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 3,
+        category: "food",
+        name: "Loaded Beef Nachos",
+        price: 10.99,
+        tag: "Sharing",
+        desc: "Crispy corn tortilla chips smothered in warm queso, seasoned ground beef, jalapeños, and fresh guacamole.",
+        img: "https://images.pexels.com/photos/1108775/pexels-photo-1108775.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 4,
+        category: "food",
+        name: "Cheese & Veggie Quesadilla",
+        price: 11.50,
+        tag: "Vegetarian",
+        desc: "Grilled tortilla filled with melted Monterey Jack cheese, roasted bell peppers, sweet corn, and mushrooms.",
+        img: "https://images.pexels.com/photos/6605214/pexels-photo-6605214.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 5,
+        category: "food",
+        name: "Sizzling Steak Fajitas",
+        price: 18.50,
+        tag: "Chef's Special",
+        desc: "Grilled sirloin strips served on a sizzling skillet with sautéed peppers, onions, and warm tortillas.",
+        img: "https://images.pexels.com/photos/7613568/pexels-photo-7613568.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 6,
+        category: "food",
+        name: "Red Chicken Enchiladas",
+        price: 13.75,
+        tag: "Spicy & Savory",
+        desc: "Rolled corn tortillas stuffed with shredded chicken, baked in rich red chili sauce and melted cheese.",
+        img: "https://images.pexels.com/photos/8448323/pexels-photo-8448323.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 7,
+        category: "food",
+        name: "Baja Crispy Fish Tacos",
+        price: 13.25,
+        tag: "Seafood",
+        desc: "Beer-battered crispy white fish in soft tortillas with purple cabbage slaw and smoky chipotle mayo.",
+        img: "https://images.pexels.com/photos/2092507/pexels-photo-2092507.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 8,
+        category: "food",
+        name: "Mexican Street Corn (Elote)",
+        price: 6.50,
+        tag: "Side Dish",
+        desc: "Char-grilled sweet corn on the cob coated with creamy mayo, cotija cheese, tajin chili powder, and lime.",
+        img: "https://images.pexels.com/photos/547263/pexels-photo-547263.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 9,
+        category: "food",
+        name: "Fresh Guacamole & Chips",
+        price: 8.50,
+        tag: "Appetizer",
+        desc: "Freshly mashed Hass avocados mixed with tomatoes, red onions, cilantro, and served with crispy chips.",
+        img: "https://images.pexels.com/photos/5737247/pexels-photo-5737247.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 10,
+        category: "food",
+        name: "Beef Chimichanga",
+        price: 14.50,
+        tag: "Crispy",
+        desc: "Deep-fried crispy burrito stuffed with spiced beef and cheese, served with Mexican rice and pico de gallo.",
+        img: "https://images.pexels.com/photos/6605308/pexels-photo-6605308.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 11,
+        category: "food",
+        name: "Cinnamon Sugar Churros",
+        price: 7.25,
+        tag: "Dessert",
+        desc: "Golden fried pastry sticks coated in cinnamon sugar, served with a warm dark chocolate dipping sauce.",
+        img: "https://images.pexels.com/photos/372851/pexels-photo-372851.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 12,
+        category: "food",
+        name: "Grilled Shrimp Skewers",
+        price: 16.25,
+        tag: "Seafood",
+        desc: "Garlic-lime marinated jumbo shrimp grilled to perfection and served with cilantro rice and mango salsa.",
+        img: "https://images.pexels.com/photos/699953/pexels-photo-699953.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 13,
+        category: "food",
+        name: "Tacos Al Pastor",
+        price: 12.75,
+        tag: "Traditional",
+        desc: "Spit-grilled marinated meat tacos topped with sweet roasted pineapple chunks, onions, and cilantro.",
+        img: "https://images.pexels.com/photos/4958641/pexels-photo-4958641.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 14,
+        category: "food",
+        name: "Quesabirria Tacos & Consomé",
+        price: 15.50,
+        tag: "Trending",
+        desc: "Crispy cheese-crusted beef birria tacos served with rich, savory spiced broth for dipping.",
+        img: "https://images.pexels.com/photos/8230030/pexels-photo-8230030.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 15,
+        category: "food",
+        name: "Chicken Tinga Tostadas",
+        price: 11.25,
+        tag: "Crunchy",
+        desc: "Crispy flat corn tortillas layered with refried beans, chipotle shredded chicken, lettuce, and queso fresco.",
+        img: "https://images.pexels.com/photos/5848495/pexels-photo-5848495.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 16,
+        category: "food",
+        name: "Chiles Rellenos",
+        price: 14.25,
+        tag: "Classic",
+        desc: "Roasted poblano peppers stuffed with melted cheese, dipped in egg batter, fried, and topped with tomato salsa.",
+        img: "https://images.pexels.com/photos/5737254/pexels-photo-5737254.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 17,
+        category: "food",
+        name: "Traditional Chicken Tamales",
+        price: 10.50,
+        tag: "Steamed",
+        desc: "Three steamed corn masa dough pockets filled with seasoned chicken and green tomatillo sauce.",
+        img: "https://images.pexels.com/photos/7613555/pexels-photo-7613555.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 18,
+        category: "food",
+        name: "Pozole Rojo Soup",
+        price: 12.00,
+        tag: "Hearty Soup",
+        desc: "Traditional hominy and tender meat stew in a rich red chili broth, garnished with radishes, cabbage, and lime.",
+        img: "https://images.pexels.com/photos/539451/pexels-photo-539451.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 19,
+        category: "food",
+        name: "Chicken Tortilla Soup",
+        price: 9.75,
+        tag: "Warm",
+        desc: "Savory tomato-chicken broth topped with crispy tortilla strips, diced avocado, sour cream, and cheese.",
+        img: "https://images.pexels.com/photos/1731535/pexels-photo-1731535.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 20,
+        category: "food",
+        name: "Aguachile Shrimp Ceviche",
+        price: 16.00,
+        tag: "Fresh Seafood",
+        desc: "Fresh shrimp cured in spicy lime-cilantro chili water with sliced cucumbers, red onions, and avocado.",
+        img: "https://images.pexels.com/photos/8697542/pexels-photo-8697542.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 21,
+        category: "food",
+        name: "Huevos Rancheros",
+        price: 10.25,
+        tag: "All-Day Brunch",
+        desc: "Two fried eggs served over lightly fried corn tortillas smothered in warm ranchero tomato-chili salsa.",
+        img: "https://images.pexels.com/photos/6605208/pexels-photo-6605208.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 22,
+        category: "food",
+        name: "Chilaquiles Verdes",
+        price: 11.00,
+        tag: "Breakfast",
+        desc: "Crisp tortilla quarters simmered in tangy green salsa, topped with crema, queso fresco, and fried eggs.",
+        img: "https://images.pexels.com/photos/6605232/pexels-photo-6605232.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 23,
+        category: "food",
+        name: "Carne Asada Burrito Bowl",
+        price: 14.75,
+        tag: "Gluten-Free",
+        desc: "Cilantro-lime rice, black beans, grilled steak, fajita veggies, roasted corn salsa, and guacamole.",
+        img: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 24,
+        category: "food",
+        name: "Steak & Cheese Torta",
+        price: 13.00,
+        tag: "Sandwich",
+        desc: "Toasted Mexican telera roll packed with grilled steak, refried beans, avocado, lettuce, tomato, and jalapeños.",
+        img: "https://images.pexels.com/photos/1633525/pexels-photo-1633525.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 25,
+        category: "food",
+        name: "Spicy Jalapeño Poppers",
+        price: 8.25,
+        tag: "Starter",
+        desc: "Crispy breaded jalapeño peppers stuffed with creamy cheddar cheese, served with cool ranch dressing.",
+        img: "https://images.pexels.com/photos/60616/fried-chicken-chicken-fried-crunchy-60616.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 26,
+        category: "food",
+        name: "Chicken Flautas (Taquitos)",
+        price: 11.75,
+        tag: "Crispy",
+        desc: "Four tightly rolled crispy corn tortillas filled with spiced chicken, drizzled with crema and guacamole.",
+        img: "https://images.pexels.com/photos/4958773/pexels-photo-4958773.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 27,
+        category: "food",
+        name: "Tres Leches Cake",
+        price: 7.95,
+        tag: "Sweet",
+        desc: "Ultra-moist sponge cake soaked in three kinds of milk, topped with whipped vanilla cream and strawberries.",
+        img: "https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 28,
+        category: "food",
+        name: "Caramel Flan Napolitano",
+        price: 6.95,
+        tag: "Dessert",
+        desc: "Creamy vanilla egg custard baked to perfection and glazed with rich golden caramel sauce.",
+        img: "https://images.pexels.com/photos/3026804/pexels-photo-3026804.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 29,
+        category: "food",
+        name: "Grilled Carne Tampiqueña",
+        price: 19.25,
+        tag: "Signature",
+        desc: "Tender grilled skirt steak served alongside a cheese enchilada, guacamole, refried beans, and rajas.",
+        img: "https://images.pexels.com/photos/3535383/pexels-photo-3535383.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 30,
+        category: "food",
+        name: "Black Bean & Corn Empanadas",
+        price: 9.50,
+        tag: "Pastry",
+        desc: "Three golden baked turnovers filled with spiced black beans, sweet corn, and melted Oaxaca cheese.",
+        img: "https://images.pexels.com/photos/6287295/pexels-photo-6287295.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+
+      // --- 12 DRINK ITEMS ---
+      {
+        id: 31,
+        category: "drink",
+        name: "Classic Cinnamon Horchata",
+        price: 4.50,
+        tag: "Best Seller",
+        desc: "Creamy traditional Mexican rice milk beverage blended with sweet vanilla and warm Ceylon cinnamon.",
+        img: "https://images.pexels.com/photos/128242/pexels-photo-128242.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 32,
+        category: "drink",
+        name: "Agua de Jamaica (Hibiscus)",
+        price: 4.25,
+        tag: "Refreshing",
+        desc: "Chilled ruby-red hibiscus flower tea lightly sweetened with organic cane sugar and a squeeze of lime.",
+        img: "https://images.pexels.com/photos/1194030/pexels-photo-1194030.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 33,
+        category: "drink",
+        name: "Spicy Mango Chamoyada",
+        price: 5.75,
+        tag: "Signature",
+        desc: "Frozen sweet mango slush swirled with tangy chamoy sauce, chili-lime tajin rim, and tamarind candy.",
+        img: "https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 34,
+        category: "drink",
+        name: "Agua de Tamarindo",
+        price: 4.25,
+        tag: "Traditional",
+        desc: "Sweet and tangy chilled tamarind fruit infusion served over crushed ice with a fresh lime wheel.",
+        img: "https://images.pexels.com/photos/338713/pexels-photo-338713.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 35,
+        category: "drink",
+        name: "Virgin Lime Margarita",
+        price: 5.50,
+        tag: "Mocktail",
+        desc: "Zesty freshly squeezed key lime juice shaken with agave nectar and sparkling water in a salted-rim glass.",
+        img: "https://images.pexels.com/photos/1571075/pexels-photo-1571075.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 36,
+        category: "drink",
+        name: "Strawberry Agua Fresca",
+        price: 4.75,
+        tag: "Fruity",
+        desc: "Blended ripe strawberries, cold spring water, and a hint of fresh mint leaves for ultimate refreshment.",
+        img: "https://images.pexels.com/photos/103566/pexels-photo-103566.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 37,
+        category: "drink",
+        name: "Cucumber Mint Limonada",
+        price: 4.50,
+        tag: "Cooling",
+        desc: "Crisp English cucumber juice blended with fresh lime, garden mint, and a touch of raw agave.",
+        img: "https://images.pexels.com/photos/96974/pexels-photo-96974.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 38,
+        category: "drink",
+        name: "Pineapple Jalapeño Agua",
+        price: 5.25,
+        tag: "Sweet & Spicy",
+        desc: "Tropical golden pineapple juice infused with a subtle kick of fresh green jalapeño and cilantro.",
+        img: "https://images.pexels.com/photos/1187766/pexels-photo-1187766.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 39,
+        category: "drink",
+        name: "Mexican Café de Olla",
+        price: 4.00,
+        tag: "Hot Coffee",
+        desc: "Traditional spiced coffee brewed in a clay pot with cinnamon sticks, piloncillo cane sugar, and orange peel.",
+        img: "https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 40,
+        category: "drink",
+        name: "Spiced Mexican Hot Chocolate",
+        price: 4.95,
+        tag: "Rich & Warm",
+        desc: "Velvety dark chocolate frothed with steamed milk, cinnamon, nutmeg, and a hint of vanilla bean.",
+        img: "https://images.pexels.com/photos/3551717/pexels-photo-3551717.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 41,
+        category: "drink",
+        name: "Watermelon Basil Fresca",
+        price: 4.75,
+        tag: "Summer Hit",
+        desc: "Juicy chilled watermelon puree strained and served over ice with aromatic sweet basil leaves.",
+        img: "https://images.pexels.com/photos/1435706/pexels-photo-1435706.jpeg?auto=compress&cs=tinysrgb&w=600"
+      },
+      {
+        id: 42,
+        category: "drink",
+        name: "Sparkling Blood Orange Soda",
+        price: 4.50,
+        tag: "Citrus",
+        desc: "Handcrafted Mexican citrus soda made with freshly pressed blood oranges and crisp sparkling mineral water.",
+        img: "https://images.pexels.com/photos/277253/pexels-photo-277253.jpeg?auto=compress&cs=tinysrgb&w=600"
+      }
+    ];
+
+    let cart = [];
+    let selectedPaymentMethod = "";
+    let selectedPaymentType = "";
+
+    // Timer variables for 5-minute QR expiry (300 seconds)
+    let qrCountdownInterval = null;
+    let qrRemainingSeconds = 300;
+    let isQrExpired = false;
+
+    // Login Handler
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const usernameInput = document.getElementById('username').value.trim();
+      if (usernameInput !== "") {
+        document.getElementById('display-user').textContent = `Hello, ${usernameInput}`;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        renderMenu();
+        window.scrollTo(0, 0);
+      }
+    });
+
+    // Logout Handler
+    function logout() {
+      document.getElementById('main-app').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('login-form').reset();
+      resetPaymentUI();
+      cart = [];
+      updateCartUI();
+    }
+
+    // Create Single Menu Card HTML
+    function createMenuCard(item) {
+      const isDrink = item.category === 'drink';
+      const fallback = isDrink ? fallbackDrinkImg : fallbackFoodImg;
+      const badgeClass = isDrink ? 'badge-tag badge-drink' : 'badge-tag';
+
+      return `
+        <div class="menu-item">
+          <div class="menu-img-wrapper">
+            <span class="${badgeClass}">${item.tag}</span>
+            <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null; this.src='${fallback}';">
+          </div>
+          <div class="menu-details">
+            <div>
+              <div class="menu-title">
+                <span>${item.name}</span>
+                <span class="price">$${item.price.toFixed(2)}</span>
+              </div>
+              <p class="menu-description">${item.desc}</p>
+            </div>
+            <button type="button" class="btn-order" onclick="addToCart(${item.id})">+ Add to Order</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render Both Food (30) and Drink (12) Sections
+    function renderMenu() {
+      const foodContainer = document.getElementById('food-container');
+      const drinkContainer = document.getElementById('drink-container');
+
+      const foods = menuData.filter(item => item.category === 'food');
+      const drinks = menuData.filter(item => item.category === 'drink');
+
+      foodContainer.innerHTML = foods.map(createMenuCard).join('');
+      drinkContainer.innerHTML = drinks.map(createMenuCard).join('');
+    }
+
+    // Start or Restart 5-Minute QR Countdown Timer
+    function startQrTimer() {
+      clearInterval(qrCountdownInterval);
+      qrRemainingSeconds = 300; // 5 minutes = 300 seconds
+      isQrExpired = false;
+
+      const timerDisplay = document.getElementById('qr-timer-display');
+      const qrImg = document.getElementById('qr-code-img');
+      const expiredOverlay = document.getElementById('qr-expired-overlay');
+      const refreshBtn = document.getElementById('btn-refresh-qr');
+
+      timerDisplay.classList.remove('danger');
+      qrImg.classList.remove('expired');
+      expiredOverlay.style.display = 'none';
+      refreshBtn.style.display = 'none';
+
+      updateTimerDisplay();
+
+      qrCountdownInterval = setInterval(() => {
+        qrRemainingSeconds--;
+        updateTimerDisplay();
+
+        if (qrRemainingSeconds <= 60 && qrRemainingSeconds > 0) {
+          timerDisplay.classList.add('danger');
+        }
+
+        if (qrRemainingSeconds <= 0) {
+          clearInterval(qrCountdownInterval);
+          isQrExpired = true;
+          timerDisplay.textContent = "⛔ QR Code Expired (00:00)";
+          qrImg.classList.add('expired');
+          expiredOverlay.style.display = 'block';
+          refreshBtn.style.display = 'inline-block';
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(qrRemainingSeconds / 60)).padStart(2, '0');
+      const secs = String(qrRemainingSeconds % 60).padStart(2, '0');
+      document.getElementById('qr-timer-display').textContent = `⏳ Time Remaining: ${mins}:${secs}`;
+    }
+
+    function restartQrTimer() {
+      const totalStr = document.getElementById('cart-total-price').textContent;
+      const qrData = encodeURIComponent(`MexicanaRestaurant-${selectedPaymentMethod}-${totalStr}-${Date.now()}`);
+      document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+      startQrTimer();
+      showToast("🔄 New QR code generated! Valid for 5 minutes.");
+    }
+
+    // Select Payment Method & Show Relevant Details
+    function selectPayment(element, type) {
+      document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      
+      const radio = element.querySelector('input[type="radio"]');
+      radio.checked = true;
+      selectedPaymentMethod = radio.value;
+      selectedPaymentType = type;
+
+      const qrBox = document.getElementById('qr-payment-box');
+      const bankBox = document.getElementById('bank-payment-box');
+      const totalStr = document.getElementById('cart-total-price').textContent;
+
+      if (type === 'ewallet') {
+        bankBox.style.display = 'none';
+        qrBox.style.display = 'block';
+        document.getElementById('qr-title').textContent = `Scan QR Code (${selectedPaymentMethod})`;
+        document.getElementById('qr-amount-text').textContent = `Total Amount: ${totalStr}`;
+        const qrData = encodeURIComponent(`MexicanaRestaurant-${selectedPaymentMethod}-${totalStr}-${Date.now()}`);
+        document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+        startQrTimer();
+      } else if (type === 'bank') {
+        clearInterval(qrCountdownInterval);
+        qrBox.style.display = 'none';
+        bankBox.style.display = 'block';
+        document.getElementById('bank-selected-info').textContent = `Selected Method: ${selectedPaymentMethod} Transfer`;
+      }
+    }
+
+    function resetPaymentUI() {
+      clearInterval(qrCountdownInterval);
+      selectedPaymentMethod = "";
+      selectedPaymentType = "";
+      isQrExpired = false;
+      document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('qr-payment-box').style.display = 'none';
+      document.getElementById('bank-payment-box').style.display = 'none';
+      document.getElementById('account-input').value = "";
+    }
+
+    // Show Toast Notification
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = "show";
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 2200);
+    }
+
+    // Add Item to Cart
+    function addToCart(id) {
+      const product = menuData.find(item => item.id === id);
+      if (!product) return;
+
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
+      updateCartUI();
+      showToast(`✓ ${product.name} added to cart!`);
+    }
+
+    // Change Item Quantity
+    function changeQty(id, delta) {
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) {
+        cart = cart.filter(i => i.id !== id);
+      }
+      updateCartUI();
+    }
+
+    // Update Cart Display & QR Amount
+    function updateCartUI() {
+      const cartList = document.getElementById('cart-items');
+      const countBadge = document.getElementById('cart-count');
+      const totalPriceEl = document.getElementById('cart-total-price');
+
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const formattedTotal = `$${totalPrice.toFixed(2)}`;
+
+      countBadge.textContent = totalItems;
+      totalPriceEl.textContent = formattedTotal;
+
+      if (selectedPaymentType === 'ewallet') {
+        document.getElementById('qr-amount-text').textContent = `Total Amount: ${formattedTotal}`;
+        if (!isQrExpired) {
+          const qrData = encodeURIComponent(`MexicanaRestaurant-${selectedPaymentMethod}-${formattedTotal}`);
+          document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+        }
+      }
+
+      if (cart.length === 0) {
+        cartList.innerHTML = `<li style="color: #888; justify-content: center;">Your cart is currently empty. Please select items from the menu above.</li>`;
+        return;
+      }
+
+      cartList.innerHTML = cart.map(item => `
+        <li>
+          <div>
+            <strong>${item.name}</strong> <br>
+            <small style="color:#666;">$${item.price.toFixed(2)} x ${item.qty}</small>
+          </div>
+          <div class="cart-controls">
+            <button type="button" onclick="changeQty(${item.id}, -1)">-</button>
+            <span style="min-width: 20px; text-align: center;">${item.qty}</span>
+            <button type="button" onclick="changeQty(${item.id}, 1)">+</button>
+            <strong style="margin-left: 15px; color: var(--secondary-color);">$${(item.price * item.qty).toFixed(2)}</strong>
+          </div>
+        </li>
+      `).join('');
+    }
+
+    // Checkout & Payment Processing
+    function checkout() {
+      if (cart.length === 0) {
+        alert("Your order cart is empty. Please select at least one item from the menu first!");
+        return;
+      }
+      if (!selectedPaymentMethod) {
+        alert("Please select a payment method first (Mandiri, BRI, BCA, GoPay, DANA, or QRIS)!");
+        return;
+      }
+
+      const total = document.getElementById('cart-total-price').textContent;
+
+      if (selectedPaymentType === 'bank') {
+        const accountNum = document.getElementById('account-input').value.trim();
+        if (accountNum === "") {
+          alert("Please enter your bank account number first!");
+          document.getElementById('account-input').focus();
+          return;
+        }
+        alert(`Thank you! Your payment via ${selectedPaymentMethod} from account number ${accountNum} for ${total} is being processed.`);
+      } else {
+        if (isQrExpired) {
+          alert("Your QR code has expired! Please click 'Generate New QR Code' to get a fresh code before paying.");
+          return;
+        }
+        alert(`Thank you! Your ${selectedPaymentMethod} QR payment of ${total} has been confirmed. Our kitchen is preparing your order!`);
+      }
+      
+      cart = [];
+      resetPaymentUI();
+      updateCartUI();
+    }
+  </script>
+
+</body>
+</html>
